@@ -1,0 +1,54 @@
+/* ── Tailwind layers ──────────────────────────────────────────── */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base overrides ───────────────────────────────────────────── */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-brand-ivory text-brand-charcoal font-body;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+}
+
+/* ── Reusable component classes ───────────────────────────────── */
+@layer components {
+
+  /* Primary button — red fill */
+  .btn-primary {
+    @apply bg-brand-red text-white font-semibold px-6 py-2.5 rounded-full
+           hover:bg-brand-redDark transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-brand-red focus:ring-offset-2
+           active:scale-95;
+  }
+
+  /* Outline button */
+  .btn-outline {
+    @apply border-2 border-brand-red text-brand-red font-semibold px-6 py-2.5 rounded-full
+           hover:bg-brand-red hover:text-white transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-brand-red focus:ring-offset-2;
+  }
+
+  /* Form input */
+  .form-input {
+    @apply w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm
+           focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent
+           bg-white placeholder-gray-400 transition;
+  }
+
+  /* Section heading */
+  .section-title {
+    @apply text-3xl md:text-4xl font-display font-bold text-brand-charcoal;
+  }
+
+  /* Card container */
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100
+           hover:shadow-md transition-shadow duration-200;
+  }
+}
