@@ -1,71 +1,81 @@
-// App.jsx
-// ─────────────────────────────────────────────────────────────────────────────
-// Root component. Sets up:
-//  1. AuthProvider — wraps everything so any component can call useAuth()
-//  2. BrowserRouter — enables client-side routing
-//  3. Routes — maps URL paths to page components
-//  4. Navbar + Footer wrap around all page content
-//
-// HOW REACT ROUTER WORKS:
-//   <Routes> looks at the current URL and renders the matching <Route>.
-//   <Route path="/search" element={<Search />} /> means "when URL is /search, show Search".
-//   The * path is a catch-all — shown when nothing else matches (404).
-// ─────────────────────────────────────────────────────────────────────────────
+import { createContext, useContext, useMemo, useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { applicants as seedApplicants, jobs } from "./data/hiringData";
+import PublicLayout from "./components/PublicLayout";
+import DashboardLayout from "./components/DashboardLayout";
+import Home from "./pages/Home";
+import Jobs from "./pages/Jobs";
+import Apply from "./pages/Apply";
+import ApplicationSuccess from "./pages/ApplicationSuccess";
+import Dashboard from "./pages/Dashboard";
+import Applicants from "./pages/Applicants";
+import CandidateDetails from "./pages/CandidateDetails";
+import Reports from "./pages/Reports";
+import Analytics from "./pages/Analytics";
+import Pipeline from "./pages/Pipeline";
+import Messages from "./pages/Messages";
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+const HiringContext = createContext(null);
+export const useHiring = () => useContext(HiringContext);
 
-// Layout components
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
+function HiringProvider({ children }) {
+  const [applicants, setApplicants] = useState(seedApplicants);
+  const [notifications, setNotifications] = useState([
+    { id: 1, type: "applicant", title: "New application received", detail: "Aarav Mehta applied for Product Designer", time: "8 min" },
+    { id: 2, type: "calendar", title: "Interview starting soon", detail: "Priya Nair · Frontend Engineer", time: "32 min" },
+    { id: 3, type: "status", title: "Candidate moved to Shortlisted", detail: "Rohan Kapoor · Data Analyst", time: "1 hr" },
+  ]);
+  const [lastApplication, setLastApplication] = useState(null);
 
-// Pages
-import Home     from "./pages/Home";
-import Login    from "./pages/Login";
-import Register from "./pages/Register";
-import Profile  from "./pages/Profile";
-import Search   from "./pages/Search";
-import Matches  from "./pages/Matches";
+  const updateApplicant = (id, patch) => setApplicants((items) => items.map((item) => item.id === id ? { ...item, ...patch } : item));
+  const deleteApplicant = (id) => setApplicants((items) => items.filter((item) => item.id !== id));
+  const addApplicant = (data) => {
+    const id = `APP-${new Date().getFullYear()}-${String(applicants.length + 41).padStart(4, "0")}`;
+    const job = jobs.find((item) => item.id === Number(data.jobId)) || jobs[0];
+    const newApplicant = {
+      id, name: data.fullName, email: data.email, phone: data.phone, address: data.address,
+      role: job.title, department: job.department, experience: data.experience || "0 years",
+      currentCompany: data.currentCompany || "Not provided", currentSalary: data.currentSalary || "—",
+      expectedSalary: data.expectedSalary || "—", notice: data.noticePeriod || "Immediate",
+      education: data.education, skills: data.skills.split(",").map((s) => s.trim()).filter(Boolean),
+      status: "Applied", score: 58, applied: "Just now", source: "Careers page",
+      location: job.location, avatar: data.fullName.split(" ").map((part) => part[0]).slice(0, 2).join("").toUpperCase(),
+      strengths: "", weaknesses: "", recommendedRole: job.title, notes: "New application — pending review.",
+    };
+    setApplicants((items) => [newApplicant, ...items]);
+    setLastApplication(newApplicant);
+    setNotifications((items) => [{ id: Date.now(), type: "applicant", title: "New application received", detail: `${data.fullName} applied for ${job.title}`, time: "Now" }, ...items]);
+    return id;
+  };
 
-// ── 404 Not Found page ────────────────────────────────────────────────────────
-function NotFound() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-brand-ivory">
-      <div className="text-center px-4">
-        <div className="text-8xl font-display font-bold text-brand-red mb-2">404</div>
-        <h2 className="font-display text-2xl font-semibold text-brand-charcoal mb-3">Page Not Found</h2>
-        <p className="text-gray-500 mb-6">The page you're looking for doesn't exist.</p>
-        <a href="/" className="btn-primary px-8 py-3">Go Home</a>
-      </div>
-    </div>
-  );
+  const value = useMemo(() => ({ applicants, jobs, notifications, setNotifications, lastApplication, updateApplicant, deleteApplicant, addApplicant }), [applicants, notifications, lastApplication]);
+  return <HiringContext.Provider value={value}>{children}</HiringContext.Provider>;
 }
 
-// ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   return (
-    // 1️⃣  AuthProvider makes auth state available everywhere
-    <AuthProvider>
-      {/* 2️⃣  BrowserRouter enables React Router */}
-      <BrowserRouter>
-        {/* Sticky navbar appears on every page */}
-        <Navbar />
-
-        {/* 3️⃣  Routes: only ONE route renders at a time */}
+    <HiringProvider>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
-          <Route path="/"           element={<Home />}     />
-          <Route path="/login"      element={<Login />}    />
-          <Route path="/register"   element={<Register />} />
-          <Route path="/profile"    element={<Profile />}  />
-          <Route path="/profile/:id" element={<Profile />} />
-          <Route path="/search"     element={<Search />}   />
-          <Route path="/matches"    element={<Matches />}  />
-          <Route path="*"           element={<NotFound />} />
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/jobs" element={<Jobs />} />
+            <Route path="/apply" element={<Apply />} />
+            <Route path="/apply/:jobId" element={<Apply />} />
+            <Route path="/success" element={<ApplicationSuccess />} />
+          </Route>
+          <Route path="/hr" element={<DashboardLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="applicants" element={<Applicants />} />
+            <Route path="applicants/:id" element={<CandidateDetails />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="pipeline" element={<Pipeline />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="messages" element={<Messages />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-
-        {/* Footer appears on every page */}
-        <Footer />
       </BrowserRouter>
-    </AuthProvider>
+    </HiringProvider>
   );
 }

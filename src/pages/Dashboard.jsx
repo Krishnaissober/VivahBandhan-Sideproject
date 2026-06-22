@@ -1,0 +1,19 @@
+import { Link } from "react-router-dom";
+import { FiArrowDownRight, FiArrowRight, FiArrowUpRight, FiBriefcase, FiCalendar, FiCheckCircle, FiClock, FiUserCheck, FiUsers, FiXCircle } from "react-icons/fi";
+import { useHiring } from "../App";
+import { activities } from "../data/hiringData";
+import { DepartmentChart, StatusDonut } from "../components/DashboardCharts";
+import CandidateScore from "../components/CandidateScore";
+import { statusClass } from "../components/ApplicantTable";
+
+export default function Dashboard() {
+  const { applicants } = useHiring();
+  const stats = [
+    { label: "Total applicants", value: "124", trend: "+12.4%", icon: FiUsers, color: "purple", up: true },
+    { label: "Shortlisted", value: "28", trend: "+8.1%", icon: FiUserCheck, color: "green", up: true },
+    { label: "Interviews", value: "16", trend: "+3.2%", icon: FiCalendar, color: "blue", up: true },
+    { label: "Pending review", value: "19", trend: "-4.5%", icon: FiClock, color: "orange", up: false },
+    { label: "Rejected", value: "32", trend: "-2.1%", icon: FiXCircle, color: "pink", up: false },
+  ];
+  return <div><div className="page-title-row"><div><p className="eyebrow">Monday, 22 June</p><h1>Good morning, Neha.</h1><p>Here’s what’s happening with your hiring pipeline today.</p></div><Link className="button button-primary small" to="/hr/applicants">View applicants <FiArrowRight /></Link></div><div className="stats-grid">{stats.map(({ label, value, trend, icon: Icon, color, up }) => <article className="stat-card" key={label}><div className={`stat-icon ${color}`}><Icon /></div><div className="stat-info"><span>{label}</span><strong>{value}</strong></div><span className={`trend ${up ? "up" : "down"}`}>{up ? <FiArrowUpRight /> : <FiArrowDownRight />}{trend}</span></article>)}</div><div className="dashboard-grid charts-row"><section className="dashboard-card wide"><div className="card-heading"><div><h2>Applications by department</h2><p>Last 30 days</p></div><select><option>Last 30 days</option><option>Last 90 days</option></select></div><DepartmentChart /></section><section className="dashboard-card"><div className="card-heading"><div><h2>Hiring status</h2><p>Active candidates</p></div></div><StatusDonut /></section></div><div className="dashboard-grid lower-row"><section className="dashboard-card recent-candidates"><div className="card-heading"><div><h2>Top candidates</h2><p>Highest scoring active applicants</p></div><Link to="/hr/applicants">See all <FiArrowRight /></Link></div>{applicants.filter(a => a.status !== "Rejected").slice(0, 4).map((person) => <Link to={`/hr/applicants/${person.id}`} className="candidate-list-row" key={person.id}><span className="avatar">{person.avatar}</span><div><strong>{person.name}</strong><small>{person.role}</small></div><CandidateScore score={person.score} /><span className={`status-pill ${statusClass(person.status)}`}>{person.status}</span><FiArrowRight /></Link>)}</section><section className="dashboard-card activity-card"><div className="card-heading"><div><h2>Recent activity</h2><p>Latest team updates</p></div></div><div className="activity-list">{activities.map((item, index) => <div className="activity-row" key={index}><span className={`activity-dot ${item.color}`} /> <div><p><strong>{item.actor}</strong> {item.action} <b>{item.target}</b></p><small>{item.time}</small></div></div>)}</div></section></div><section className="interview-strip"><div className="interview-date"><span>JUN</span><strong>22</strong></div><div><p className="eyebrow"><FiCalendar /> Up next · 11:30 AM</p><h3>Technical interview with Priya Nair</h3><span>Frontend Engineer · With Arjun Sethi & Vikram Jain</span></div><div className="interview-actions"><span><i className="avatar">AS</i><i className="avatar">VJ</i></span><Link className="button button-light" to="/hr/reports">Open interview room <FiArrowUpRight /></Link></div></section></div>;
+}
